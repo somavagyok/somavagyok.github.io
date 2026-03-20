@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consequences - Party Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .players-setup {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .player-count {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .player-count:hover {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+
+        .player-count.selected {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #764ba2;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hidden-answer {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: #999;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .story-card {
+            background-color: #f9f9f9;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .story-card h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+
+        .story-text {
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .progress {
+            background-color: #e0e0e0;
+            height: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background-color: #667eea;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .view-toggle button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        .hidden-section {
+            display: none;
+        }
+
+        .alert {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .current-player {
+            background-color: #e7f3ff;
+            border: 2px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Consequences</h1>
+
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="section">
+            <div class="section-title">Select Number of Players</div>
+            <div class="players-setup">
+                <div class="player-count" onclick="selectPlayers(2)">2 Players</div>
+                <div class="player-count" onclick="selectPlayers(3)">3 Players</div>
+                <div class="player-count" onclick="selectPlayers(4)">4 Players</div>
+                <div class="player-count" onclick="selectPlayers(5)">5 Players</div>
+            </div>
+            <button onclick="startGame()" id="startBtn" disabled>Start Game</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden-section">
+            <div class="current-player" id="currentPlayer"></div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="alert" id="alert" style="display: none;"></div>
+
+            <!-- Question 1: Who -->
+            <div class="input-group" id="q1-container">
+                <label>📝 Who?</label>
+                <input type="text" id="q1" placeholder="Enter a name, character, or description">
+                <div class="hidden-answer" id="q1-hidden" style="display: none;">Answer hidden ✓</div>
+                <button onclick="nextQuestion(1)">Next</button>
+            </div>
+
+            <!-- Question 2: With Who -->
+            <div class="input-group hidden-section" id="q2-container">
+                <label>👥 With whom?</label>
+                <input type="text" id="q2" placeholder="Enter a name, character, or description">
+                <div class="hidden-answer" id="q2-hidden" style="display: none;">Answer hidden ✓</div>
+                <button onclick="nextQuestion(2)">Next</button>
+            </div>
+
+            <!-- Question 3: Where -->
+            <div class="input-group hidden-section" id="q3-container">
+                <label>📍 Where?</label>
+                <input type="text" id="q3" placeholder="Enter a location">
+                <div class="hidden-answer" id="q3-hidden" style="display: none;">Answer hidden ✓</div>
+                <button onclick="nextQuestion(3)">Next</button>
+            </div>
+
+            <!-- Question 4: When -->
+            <div class="input-group hidden-section" id="q4-container">
+                <label>⏰ When?</label>
+                <input type="text" id="q4" placeholder="Enter a time or date">
+                <div class="hidden-answer" id="q4-hidden" style="display: none;">Answer hidden ✓</div>
+                <button onclick="nextQuestion(4)">Next</button>
+            </div>
+
+            <!-- Question 5: What they do -->
+            <div class="input-group hidden-section" id="q5-container">
+                <label>🎬 What do they do?</label>
+                <input type="text" id="q5" placeholder="Enter an action or activity">
+                <div class="hidden-answer" id="q5-hidden" style="display: none;">Answer hidden ✓</div>
+                <button onclick="nextQuestion(5)">Next</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden-section">
+            <div class="view-toggle">
+                <button onclick="showView('results')">📖 Read Stories</button>
+                <button onclick="showView('replay')">🔄 Play Again</button>
+            </div>
+
+            <div id="resultsView">
+                <div id="storiesContainer"></div>
+            </div>
+
+            <div id="replayView" class="hidden-section">
+                <p style="text-align: center; margin-bottom: 20px; color: #666;">Thank you for playing! Would you like to play again?</p>
+                <button onclick="resetGame()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let numPlayers = 0;
+        let currentPlayer = 0;
+        let currentQuestion = 0;
+        let answers = [];
+
+        function selectPlayers(num) {
+            numPlayers = num;
+            document.querySelectorAll('.player-count').forEach(el => el.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function startGame() {
+            // Initialize answers array
+            answers = Array(numPlayers).fill(null).map(() => ({
+                who: '',
+                withWho: '',
+                where: '',
+                when: '',
+                whatDo: ''
+            }));
+
+            document.getElementById('setupScreen').classList.add('hidden-section');
+            document.getElementById('gameScreen').classList.remove('hidden-section');
+            currentPlayer = 0;
+            currentQuestion = 1;
+            showQuestion(1);
+            updateProgress();
+        }
+
+        function showQuestion(questionNum) {
+            // Hide all questions
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`q${i}-container`).classList.add('hidden-section');
+            }
+            // Show current question
+            document.getElementById(`q${questionNum}-container`).classList.remove('hidden-section');
+            // Clear input
+            document.getElementById(`q${questionNum}`).value = '';
+            document.getElementById(`q${questionNum}`).focus();
+        }
+
+        function nextQuestion(questionNum) {
+            const input = document.getElementById(`q${questionNum}`).value.trim();
+            
+            if (!input) {
+                showAlert('Please enter an answer before continuing!');
+                return;
+            }
+
+            // Store answer
+            const keys = ['who', 'withWho', 'where', 'when', 'whatDo'];
+            answers[currentPlayer][keys[questionNum - 1]] = input;
+
+            // Show hidden message
+            document.getElementById(`q${questionNum}`).style.display = 'none';
+            document.getElementById(`q${questionNum}-hidden`).style.display = 'block';
+
+            // Wait 1 second then move to next
+            setTimeout(() => {
+                if (questionNum === 5) {
+                    // Move to next player
+                    currentPlayer++;
+                    if (currentPlayer < numPlayers) {
+                        currentQuestion = 1;
+                        showQuestion(1);
+                        // Reset hidden messages
+                        for (let i = 1; i <= 5; i++) {
+                            document.getElementById(`q${i}`).style.display = 'block';
+                            document.getElementById(`q${i}-hidden`).style.display = 'none';
+                        }
+                    } else {
+                        showResults();
+                    }
+                } else {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                }
+                updateProgress();
+            }, 1500);
+        }
+
+        function updateProgress() {
+            const totalSteps = numPlayers * 5;
+            const completedSteps = currentPlayer * 5 + (currentQuestion - 1);
+            const progress = (completedSteps / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('currentPlayer').textContent = `Player ${currentPlayer + 1} of ${numPlayers}`;
+        }
+
+        function showAlert(message) {
+            const alertEl = document.getElementById('alert');
+            alertEl.textContent = message;
+            alertEl.style.display = 'block';
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 3000);
+        }
+
+        function showResults() {
+            document.getElementById('gameScreen').classList.add('hidden-section');
+            document.getElementById('resultsScreen').classList.remove('hidden-section');
+
+            const storiesContainer = document.getElementById('storiesContainer');
+            storiesContainer.innerHTML = '';
+
+            answers.forEach((answer, index) => {
+                const story = `${answer.who} and ${answer.withWho} went to ${answer.where} ${answer.when}. There they ${answer.whatDo}.`;
+                const storyCard = document.createElement('div');
+                storyCard.className = 'story-card';
+                storyCard.innerHTML = `
+                    <h3>📖 Story ${index + 1}</h3>
+                    <p class="story-text">${story}</p>
+                `;
+                storiesContainer.appendChild(storyCard);
+            });
+        }
+
+        function showView(view) {
+            document.getElementById('resultsView').classList.toggle('hidden-section', view !== 'results');
+            document.getElementById('replayView').classList.toggle('hidden-section', view !== 'replay');
+        }
+
+        function resetGame() {
+            numPlayers = 0;
+            currentPlayer = 0;
+            currentQuestion = 0;
+            answers = [];
+
+            document.querySelectorAll('.player-count').forEach(el => el.classList.remove('selected'));
+            document.getElementById('startBtn').disabled = true;
+
+            document.getElementById('setupScreen').classList.remove('hidden-section');
+            document.getElementById('resultsScreen').classList.add('hidden-section');
+        }
+    </script>
+</body>
+</html>
