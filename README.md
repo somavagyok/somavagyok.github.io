@@ -1,1 +1,0 @@
-# somavagyok.github.io
